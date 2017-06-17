@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mocha Istanbul UI</title>
+    <link rel="stylesheet" href="./interface/style.css" />
+    <script src="./interface/runner.js"></script>
+    <script src="./interface/coverage.js"></script>
+    <script src="./interface/watcher.js"></script>
+</head>
+<body>
+    <div id="mocha">Loading...</div>
+    <div id="coverage_report">
+        <div id="coverage_report_files"></div>
+        <div id="coverage_report_source"></div>
+        <div id="coverage_report_close">X</div>
+    </div>
+    <div id="buttons">
+        <div id="back_button" style="display: none">BACK</div>
+        <div id="restart_tests">RESTART</div>
+    </div>
+    <script>
+        CoverageReporter.init();
+        Watcher.init();
+        
+
+        function setGrep(value) {
+            console.log('GREP: ' + value); 
+            mocha.grep(value);
+            runTests();
+            back_button.style.display = value? 'inline-block' : 'none';
+        }
+
+        function runTests () {
+            CoverageReporter.reset();
+            Runner.run(() => {
+                CoverageReporter.showLink();
+
+                let a = document.querySelectorAll('a');
+                [].forEach.call(a, el => {
+                    el.addEventListener('click', e => {
+
+                        let grepIndex = el.href.indexOf('&grep=');
+                        if (grepIndex > -1) {
+                            e.preventDefault();
+                            let grep = decodeURI(el.href.slice(grepIndex + 6));
+                            setGrep(grep);
+                        }
+                    });
+                });
+            });
+        }
+
+        restart_tests.onclick = runTests;
+        Watcher.on('change', runTests);
+
+        Runner.init(() => {
+            runTests();
+        });
+
+        back_button.onclick = function () {
+            setGrep('');
+        }
+    </script>
+</body>
+</html>
