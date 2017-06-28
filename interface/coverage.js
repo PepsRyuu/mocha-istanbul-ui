@@ -1,6 +1,8 @@
 const CoverageReporter = (function () {
 
-    let fs = require('fs');
+    const fs = require('fs');
+    const path = require('path');
+    const execSync = require('child_process').execSync;
 
     return {
         init () {
@@ -14,7 +16,11 @@ const CoverageReporter = (function () {
             for (let file in cov) {
                 ['b', 'f', 's'].forEach(type => {
                     for (let line in cov[file][type]) {
-                        cov[file][type][line] = 0;
+                        if (cov[file][type][line] instanceof Array) {
+                            cov[file][type][line] = cov[file][type][line].map(val => 0);
+                        } else {
+                            cov[file][type][line] = 0;
+                        }
                     }
                 });
             }
@@ -113,6 +119,19 @@ const CoverageReporter = (function () {
                     }
                 }
             }
+        },
+
+        saveReport () {
+            let coverage_folder = path.resolve(process.cwd(), 'target/coverage');
+            if (!fs.existsSync(coverage_folder)) {
+                fs.mkdirSync(coverage_folder);
+            }
+
+            let coverage_file = path.resolve(coverage_folder, 'coverage.json');
+            let istanbul = path.resolve(process.cwd(), 'node_modules/.bin/istanbul');
+
+            fs.writeFileSync(coverage_file, JSON.stringify(window.__coverage__));
+            execSync(`${istanbul} report --include ${coverage_file} lcovonly cobertura html --dir ${coverage_folder}`);
         }
     }
 })();

@@ -2,7 +2,9 @@
 <html>
 <head>
     <title>Mocha Istanbul UI</title>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="./interface/style.css" />
+    <script src="./interface/utils.js"></script>
     <script src="./interface/runner.js"></script>
     <script src="./interface/coverage.js"></script>
     <script src="./interface/watcher.js"></script>
@@ -19,12 +21,13 @@
         <div id="restart_tests">RESTART</div>
     </div>
     <script>
+        const app = require('electron').remote.app;
+
         CoverageReporter.init();
         Watcher.init();
         
 
         function setGrep(value) {
-            console.log('GREP: ' + value); 
             mocha.grep(value);
             runTests();
             back_button.style.display = value? 'inline-block' : 'none';
@@ -32,7 +35,12 @@
 
         function runTests () {
             CoverageReporter.reset();
-            Runner.run(() => {
+            Runner.run(code => {
+                if (Utils.getFlags().includes('once')) {
+                    CoverageReporter.saveReport();
+                    return app.process.exit(code);
+                }
+
                 CoverageReporter.showLink();
 
                 let a = document.querySelectorAll('a');
