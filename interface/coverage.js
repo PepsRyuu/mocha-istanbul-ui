@@ -123,6 +123,10 @@ const CoverageReporter = (function () {
 
         saveReport () {
             let coverage_folder = path.resolve(process.cwd(), 'target/coverage');
+            if (!fs.existsSync('target')) {
+                fs.mkdirSync('target');
+            }
+
             if (!fs.existsSync(coverage_folder)) {
                 fs.mkdirSync(coverage_folder);
             }
