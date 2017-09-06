@@ -2,11 +2,17 @@ const Runner = (function () {
     const glob = require('glob'); 
     const path = require('path');
     const fs = require('fs');
+    const addHook = require('pirates').addHook;
+    const istanbul = require('istanbul-lib-instrument');
+    const minimatch = require('minimatch');                    
+    const convertSourceMap = require('convert-source-map');
     const execSync = require('child_process').execSync;
     const remote = require('electron').remote;
     const app = remote.app;
 
     const filePatterns = window.location.href.match(/files=(.*?)(&|$)/)[1].split(',');
+    const bootstrapFile = filePatterns.length > 1? filePatterns[0] : undefined;
+    const testFiles = filePatterns.length > 1? filePatterns[1] : filePatterns[0];
     const node_modules_path = path.resolve(process.cwd(), 'node_modules');
 
     function stdout (message) {
@@ -74,7 +80,42 @@ const Runner = (function () {
 
                 mocha.setup({ui: 'bdd', reporter: MultiReporter});
 
-                require(path.resolve(process.cwd(), filePatterns[0]));
+                if (bootstrapFile) {
+                    require(path.resolve(process.cwd(), filePatterns[0]));
+                }
+
+                if (Utils.getFlags().includes('instrument')) {
+
+                    let exclude = ['**/test/**', '**/test{,-*}.js', '**/*.test.js', '**/__tests__/**', '**/node_modules/**'];
+                    let instrumenter = istanbul.createInstrumenter({
+                        coverageVariable: '__coverage__',
+                        produceSourceMap: true,
+                        preserveComments: true,
+                        esModules: true,
+                        noCompact: false
+                    });
+
+                    addHook((code, filename) => {
+                        let relativeFilename = path.relative(process.cwd(), filename);
+
+                        // Check for exclusions.
+                        for (let i = 0 ; i < exclude.length; i++) {
+                            if (minimatch(relativeFilename, exclude[i])) {
+                                return code;
+                            }
+                        }
+
+                        let instrumented = instrumenter.instrumentSync(code, filename);
+                        let sourceMap = instrumenter.lastSourceMap();
+                        sourceMap.sourceRoot = '';
+                        sourceMap.sources = sourceMap.sources.map(file => {
+                            return 'sources:///' + relativeFilename;
+                        })
+                        instrumented += '\n' + convertSourceMap.fromObject(sourceMap).toComment();
+                        return instrumented;
+                    });
+                }
+
                 callback();
             }, 2000);
         },
@@ -94,7 +135,7 @@ const Runner = (function () {
         },
 
         load () {
-            var files = glob(filePatterns[1], {
+            var files = glob(testFiles, {
                 cwd: process.cwd(),
                 sync: true,
                 nodir: true,

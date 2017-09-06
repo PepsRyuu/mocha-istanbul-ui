@@ -1,6 +1,6 @@
 {
   "name": "mocha-istanbul-ui",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Run Mocha with Istanbul coverage visually.",
   "bin": {
     "mocha-istanbul-ui": "./cli.js"
@@ -9,10 +9,14 @@
   "license": "MIT",
   "dependencies": {
     "chokidar": "^1.7.0",
+    "convert-source-map": "^1.5.0",
     "electron": "^1.6.11",
     "electron-context-menu": "^0.9.1",
     "glob": "^7.1.2",
     "istanbul": "^0.4.5",
-    "mocha": "^3.4.2"
+    "istanbul-lib-instrument": "^1.8.0",
+    "minimatch": "^3.0.4",
+    "mocha": "^3.4.2",
+    "pirates": "^3.0.1"
   }
 }

@@ -66,7 +66,7 @@ const CoverageReporter = (function () {
                         name="coverage_file"
                         onchange="CoverageReporter.showSource('${prop.replace(/\\/g, '\\\\')}')"
                     >
-                    <span>${prop.substring(prop.indexOf('src'))}</span>
+                    <span>${prop.replace(process.cwd(), '')}</span>
 
                 `
                 coverage_report_files.appendChild(el);

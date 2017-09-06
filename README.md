@@ -28,5 +28,4 @@ The second argument is the matcher that will be used for test files.
 
 ## Future Plans
 
-* Currently assumes that code is instrumented with ```babel-plugin-istanbul``` using ```.babelrc```.
 * Assuming headless Electron becomes available, provide a way to run the tests headless.

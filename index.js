@@ -16,10 +16,12 @@ if (flags.includes('--help')) {
 
     Options:
 
-        --once      Run test cases once and exit. 
-                    Exit code 1 if a test fails.
+        --once        Run test cases once and exit. 
+                      Exit code 1 if a test fails.
 
-        --console   Output test results to console.
+        --console     Output test results to console.
+
+        --instrument  Instrument the code. 
     `);
 
     return app.quit();
