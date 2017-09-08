@@ -37,7 +37,10 @@ const CoverageReporter = (function () {
             `;
 
             let parent = document.querySelector('#mocha-stats');
-            parent.insertBefore(el, parent.firstChild);
+            if (parent) { // might not be available if an error_screen is showing
+                parent.insertBefore(el, parent.firstChild);
+            }
+            
         },
 
         calculateCoverage () {

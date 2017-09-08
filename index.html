@@ -11,6 +11,7 @@
 </head>
 <body>
     <div id="mocha">Loading...</div>
+    <div id="error_screen" style="display: none"></div>
     <div id="coverage_report">
         <div id="coverage_report_files"></div>
         <div id="coverage_report_source"></div>
@@ -18,47 +19,65 @@
     </div>
     <div id="buttons">
         <div id="back_button" style="display: none">BACK</div>
-        <div id="restart_tests">RESTART</div>
+        <div id="restart_button" style="display: none">RESTART</div>
+        <div id="refresh_button">REFRESH</div>
     </div>
     <script>
         const app = require('electron').remote.app;
+        let running = false;
+        let curr_grep = '';
 
         CoverageReporter.init();
         Watcher.init();
         
 
         function setGrep(value) {
+            curr_grep = value;
             mocha.grep(value);
             runTests();
-            back_button.style.display = value? 'inline-block' : 'none';
         }
 
         function runTests () {
-            CoverageReporter.reset();
-            Runner.run(code => {
-                if (Utils.getFlags().includes('once')) {
-                    CoverageReporter.saveReport();
-                    return app.process.exit(code);
-                }
+            if (!running) {
+                back_button.style.display = 'none';
+                restart_button.style.display = 'none';
+                running = true;
+                CoverageReporter.reset();
+                Runner.run(code => {
+                    if (Utils.getFlags().includes('once')) {
+                        CoverageReporter.saveReport();
+                        return app.process.exit(code);
+                    }
 
-                CoverageReporter.showLink();
+                    CoverageReporter.showLink();
 
-                let a = document.querySelectorAll('a');
-                [].forEach.call(a, el => {
-                    el.addEventListener('click', e => {
+                    let a = document.querySelectorAll('a');
+                    [].forEach.call(a, el => {
+                        el.addEventListener('click', e => {
 
-                        let grepIndex = el.href.indexOf('&grep=');
-                        if (grepIndex > -1) {
-                            e.preventDefault();
-                            let grep = decodeURI(el.href.slice(grepIndex + 6));
-                            setGrep(grep);
-                        }
+                            let grepIndex = el.href.indexOf('&grep=');
+                            if (grepIndex > -1) {
+                                e.preventDefault();
+                                let grep = decodeURI(el.href.slice(grepIndex + 6));
+                                setGrep(grep);
+                            }
+                        });
                     });
+
+                    back_button.style.display = curr_grep? 'inline-block' : 'none';
+                    restart_button.style.display = 'inline-block';
+                    running = false;
                 });
-            });
+            }
+
+            
         }
 
-        restart_tests.onclick = runTests;
+        refresh_button.onclick = function () {
+            window.location.reload();
+        };
+
+        restart_button.onclick = runTests;
         Watcher.on('change', runTests);
 
         Runner.init(() => {

@@ -122,6 +122,7 @@ const Runner = (function () {
 
         reset () {
             document.querySelector('#mocha').innerHTML = '';
+            error_screen.style.display = 'none';
             mocha.suite.suites = [];
 
             for (let fileName in require.cache) {
@@ -150,14 +151,21 @@ const Runner = (function () {
 
         run (callback) {
             this.reset();
-            this.load();
-            mocha.run(function() {
-                stdout(' Passed: ' + mochaStats.passed);
-                stdout(' Failed: ' + mochaStats.failed);
 
-                let code = mochaStats.failed > 0? 1 : 0;
-                callback(code);  
-            });
+            try {
+                this.load();
+                mocha.run(function() {
+                    stdout(' Passed: ' + mochaStats.passed);
+                    stdout(' Failed: ' + mochaStats.failed);
+
+                    let code = mochaStats.failed > 0? 1 : 0;
+                    callback(code);  
+                });
+            } catch (e) {
+                error_screen.style.display = 'block';
+                error_screen.textContent = e.stack;
+                callback(1);
+            }
         }
     }
 })();

@@ -95,3 +95,16 @@
     margin-left: 10px;
     font-family: Arial, sans-serif;
 }
+
+#error_screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    color: white;
+    background-color: black;
+    white-space: pre-wrap;
+    font-family: monospace;
+    padding: 20px;
+}
