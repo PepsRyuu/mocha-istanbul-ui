@@ -21,6 +21,10 @@ const Runner = (function () {
         }
     }
 
+    function stderr (message) {
+        stdout('\x1b[31m' + message + '\x1b[0m');
+    }
+
     const mochaStats = {
         passed: 0,
         failed: 0
@@ -57,12 +61,13 @@ const Runner = (function () {
 
         runner.on('pass', test => {
             mochaStats.passed++;
-            stdout(indent() + ' ✓ ' + test.title);
+            stdout(indent() + '\x1b[32m ✓ \x1b[0m' + test.title);
         });
 
-        runner.on('fail', test => {
+        runner.on('fail', (test, err) => {
             mochaStats.failed++;
-            stdout(indent() + ' ✖ ' + test.title);
+            stderr(indent() + ' ✖ ' + test.title);
+            stderr(err.stack.split('\n').map(s => indent() + '       ' + s).join('\n'));
         });
     }
 
