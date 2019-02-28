@@ -1,7 +1,14 @@
 {
   "name": "mocha-istanbul-ui",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "description": "Run Mocha with Istanbul coverage visually.",
+  "scripts": {
+    "clean": "rm -rf dist",
+    "start:dev": "cross-env NODE_ENV=development concurrently \"npm run build:dev\" \"wait-on http://localhost:8080/main.js && electron . --instrument --watch \"sample-tests/*.test.js\"\"",
+    "build:dev": "nollup -c --hot",
+    "start": "cross-env NODE_ENV=production npm run build && electron .",
+    "build": "npm run clean && cross-env NODE_ENV=production rollup -c && cp index.html dist/"
+  },
   "bin": {
     "mocha-istanbul-ui": "./cli.js"
   },
@@ -10,7 +17,7 @@
   "dependencies": {
     "chokidar": "^1.7.0",
     "convert-source-map": "^1.5.0",
-    "electron": "^1.6.11",
+    "electron": "^5.0.0-beta.4",
     "electron-context-menu": "^0.9.1",
     "glob": "^7.1.2",
     "istanbul": "^0.4.5",
@@ -18,5 +25,19 @@
     "minimatch": "^3.0.4",
     "mocha": "^3.4.2",
     "pirates": "^3.0.1"
+  },
+  "devDependencies": {
+    "preact": "^8.2.5",
+    "chai": "^4.2.0",
+    "concurrently": "^4.1.0",
+    "cross-env": "^5.2.0",
+    "node-sass": "^4.11.0",
+    "nollup": "^0.5.1",
+    "rollup": "^1.2.3",
+    "rollup-plugin-buble": "^0.19.6",
+    "rollup-plugin-glob-import": "^0.3.1",
+    "rollup-plugin-hot-css": "0.0.4",
+    "rollup-plugin-node-resolve": "^4.0.1",
+    "wait-on": "^3.2.0"
   }
 }

@@ -1,0 +1,28 @@
+.FileSelector {
+    &-entry {
+        padding-left: 20px;
+        height: 24px;
+        line-height: 24px;
+        user-select: none;
+        cursor: pointer;
+        vertical-align: middle;
+
+        &[data-parent="true"] {
+            > div:first-child::after {
+                content: '▶';
+                margin-left: 8px;
+                vertical-align: middle;
+            }
+
+            &[data-expanded="true"] {
+                > div:first-child::after {
+                    content: '▼';
+                }
+            }
+        }
+
+        &[data-selected="true"] {
+            background-color: lightblue;
+        }
+    }
+}

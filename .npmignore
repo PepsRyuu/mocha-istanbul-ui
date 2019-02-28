@@ -57,3 +57,9 @@ typings/
 # dotenv environment variables file
 .env
 
+sample-tests/
+src/
+target/
+rollup.config.js
+README.md
+/index.html

@@ -1,0 +1,70 @@
+.MIUI-App {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #E3E3E0;
+
+    &-controls {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        padding: 20px;
+        white-space: nowrap;
+
+        button {
+            margin-left: 16px;
+            border: none;
+            background-color: #999;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .grepping {
+            text-align: right;
+            font-family: Arial, Helvetica, sans-serif;
+            padding-bottom: 16px;
+            font-size: 14px;
+
+            span:first-child {
+                font-weight: 600;
+                margin-right: 12px;
+            }
+        }
+    }
+}
+
+.scrollbar {
+    overflow: auto;
+
+    &::-webkit-scrollbar {   
+        width: 8px;   
+        height: 8px; 
+    }
+
+    &::-webkit-scrollbar-track {   
+        background-color: #c8c8c8;   
+        border-radius: 8px; 
+    } 
+
+    &::-webkit-scrollbar-thumb {   
+        border-radius: 8px;   
+        background-color: #aaa; 
+    }
+
+    &::-webkit-scrollbar-corner {
+        background-color: transparent;
+    }
+}
+
+iframe {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    z-index: -1;
+    top: -10000px;
+    left: -10000px;
+}
