@@ -1,0 +1,22 @@
+.TestSummary {
+    font-family: Arial, Helvetica, sans-serif;
+    position: absolute;
+    top: 0;
+    right: 0;
+    white-space: nowrap;
+    padding: 20px;
+    font-size: 14px;
+
+    &-entry {
+        margin-bottom: 6px;
+        display: flex;
+        justify-content: space-between;
+        width: 120px;
+
+        span:first-child {
+            font-weight: 600;
+            display: inline-block;
+            margin-right: 12px;
+        }
+    }
+}

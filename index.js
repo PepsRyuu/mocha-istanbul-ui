@@ -22,6 +22,9 @@ if (flags.includes('--help')) {
         --console     Output test results to console.
 
         --instrument  Instrument the code. 
+
+        --watch       Watch for file changes.
+                      Resets tests when file changes.
     `);
 
     return app.quit();
@@ -41,14 +44,25 @@ app.on('ready', function() {
     let {width, height} = electron.screen.getPrimaryDisplay().workAreaSize
 
     mainWindow = new BrowserWindow({
-        width: width, 
-        height: height,
-        title: 'Mocha Istanbul UI'
+        width: Math.min(1280, width), 
+        height: Math.min(768, height),
+        title: 'Mocha Istanbul UI',
+        webPreferences: {
+            nodeIntegration: true,
+            nodeIntegrationInSubFrames: true
+        }
     });
 
     mainWindow.setMenu(null);
 
-    let url = 'file://' + __dirname + '/index.html?files=' + files;
+    let url;
+    if (process.env.NODE_ENV === 'development') {
+        url = 'http://localhost:8080/index.html'; // needed for HMR to work
+    } else {
+        url = 'file://' + __dirname + '/dist/index.html'
+    }
+ 
+    url += '?files=' + files;
     flags.forEach(flag => {
         url += `&${flag.replace('--', '')}=true`;
     });
