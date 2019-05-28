@@ -12,6 +12,16 @@ export function getQuery () {
         query[parts[0]] = parts[1];
     }));
 
+    for (let key in query) {
+        if (query[key] === 'undefined') {
+            delete query[key];
+        }
+
+        if (query[key] === 'true' || query[key] === 'false') {
+            query[key] = (query[key] === 'true');
+        }
+    }
+
     return query; 
 }
 

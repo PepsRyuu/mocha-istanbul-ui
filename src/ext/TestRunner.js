@@ -1,6 +1,10 @@
-let test_stats, parent_suites, active_suite, progress_callback, done_callback;
+let test_stats, parent_suites, active_suite, progress_callback, reset_callback, done_callback;
 
 function setup (opts, callback) {
+    progress_callback = opts.onTestProgress;
+    reset_callback = opts.onTestReset;
+    done_callback = opts.onTestDone;
+
     window.__miui__.subscribe((type, data) => {
         if (type === 'init') {
             callback();
@@ -29,6 +33,11 @@ function setup (opts, callback) {
             test_stats[data.state]++;
         }
 
+        if (type === 'reset') {
+            statsReset();
+            reset_callback();
+        }
+
         if (type === 'done') {
             done_callback(test_stats.failed > 0? 1 : 0, test_stats);
         }
@@ -41,7 +50,7 @@ function setup (opts, callback) {
     window.__miui_iframe.contentDocument.write(`
         <script>
         (function () {
-            require(window.top.require.resolve('mocha/mocha.js'));
+            global.require(window.top.require.resolve('mocha/mocha.js'));
             let app_process = global.require('electron').remote.app;
 
             function Reporter (runner) {
@@ -66,7 +75,7 @@ function setup (opts, callback) {
                     indentation--;
                     if (indentation === 1) {
                         stdout(' ');
-                    } 
+                    }
 
                     window.parent.__miui__.publish('suite end');
                 });
@@ -118,7 +127,7 @@ function setup (opts, callback) {
                     }
                 },
 
-                run: function(files, callback) {
+                run: function(files) {
                     try {
                         files.forEach(global.require);
                         mocha.run(() => {
@@ -131,7 +140,19 @@ function setup (opts, callback) {
                 }
             }
 
-            window.parent.__miui__.publish('init')
+            window.miui = {
+                reset: function () {
+                    window.parent.__miui__.publish('reset');
+                    window.__miui_testrunner.reset();
+                },
+
+                run: function () {
+                    window.parent.__miui__.publish('reset'); // for statsReset
+                    window.__miui_testrunner.run([]);
+                }
+            }
+
+            window.parent.__miui__.publish('init');
         })();
         </script>
     `);
@@ -147,7 +168,6 @@ function statsReset () {
 
     parent_suites = [];
     active_suite = test_stats;
-    progress_callback = () => {};
 }
 
 export default class TestRunner {
@@ -164,10 +184,8 @@ export default class TestRunner {
         window.__miui_iframe.contentWindow.__miui_testrunner.reset();
     }
 
-    static run (files, progress, callback) {
+    static run (files) {
         this.reset();
-        progress_callback = progress;
-        done_callback = callback;
         window.__miui_iframe.contentWindow.__miui_testrunner.run(files);
     }
 }

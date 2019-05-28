@@ -27,42 +27,51 @@ export default class App extends Component {
     constructor (props) {
         super();
 
-        let file_parts = props.files.split(',');
-
         this.state = {
             stats: undefined,
             status: 'init',
-            bootstrap: file_parts.length > 1? file_parts[0] : undefined,
-            files: file_parts.length > 1? file_parts[1] : file_parts[0],
             showCoverage: false,
             coverage: undefined,
             grepping: false
         };
+
+        this.pendingRunTest = false;
 
         this.onRefresh = this.onRefresh.bind(this);
         this.onRunTests = this.onRunTests.bind(this);
         this.onToggleCoverage = this.onToggleCoverage.bind(this);
         this.onGrep = this.onGrep.bind(this);
         this.onStopGrep = this.onStopGrep.bind(this);
+
+        this.onTestProgress = this.onTestProgress.bind(this);
+        this.onTestReset = this.onTestReset.bind(this);
+        this.onTestDone = this.onTestDone.bind(this);
     }
 
     componentDidMount () {
-        if (this.state.bootstrap) {
-            window.__miui_iframe.contentDocument.write(`<script>global.require('${this.state.bootstrap}');</script>`);
-        }
-
         if (this.props.instrument) {
             CoverageInstrumenter.instrument();
-        }
+        } 
 
         if (this.props.watch) {
             startWatcher(this.onRunTests);
         }
 
         TestRunner.setup({ 
-            console: this.props.console
+            console: this.props.console,
+            onTestProgress: this.onTestProgress,
+            onTestReset: this.onTestReset,
+            onTestDone: this.onTestDone
         }, () => {
-            this.onRunTests();
+            if (this.props.bootstrap) {
+                let path = global.require('path');
+                let bootstrap = path.normalize(path.resolve(process.cwd(), this.props.bootstrap)).replace(/\\/g, '\\\\');
+                window.__miui_iframe.contentDocument.write(`<script>global.require('${bootstrap}');</script>`);
+            }
+
+            if (!this.props.manual) {
+                this.onRunTests();
+            }
         });
     }
 
@@ -71,36 +80,50 @@ export default class App extends Component {
     }
 
     onRunTests () {
-        let files = getTestFiles(this.state.files);
-        window.__miui_iframe.contentDocument.body.innerHTML = '';
+        if (this.state.status === 'running') {
+            this.pendingRunTest = true;
+            return;
+        }
 
+        let files = getTestFiles(this.props.files);
+        TestRunner.run(files);
+    }
+
+    onTestProgress (stats) {
+        this.setState({ 
+            stats,
+            status: 'running'
+        });
+    }
+
+    onTestReset () {
         CoverageInstrumenter.reset();
+    }
 
-        TestRunner.run(files, stats => {
-            this.setState({ 
-                stats,
-                status: 'running'
-            });
-        }, (code, stats) => {
-            if (this.props.console) {
-                app_process.console.log('  Passed: ' + stats.passed);
-                app_process.console.log('  Failed: ' + stats.failed);
-                app_process.console.log('  Pending: ' + stats.pending);
+    onTestDone (code, stats) {
+        if (this.props.console) {
+            app_process.console.log('  Passed: ' + stats.passed);
+            app_process.console.log('  Failed: ' + stats.failed);
+            app_process.console.log('  Pending: ' + stats.pending);
 
-                if (CoverageInstrumenter.isCoverageAvailable()) {
-                    app_process.console.log('  Coverage: ' + CoverageInstrumenter.getCoverage().percentage + '%');
-                }
+            if (CoverageInstrumenter.isCoverageAvailable()) {
+                app_process.console.log('  Coverage: ' + CoverageInstrumenter.getCoverage().percentage + '%');
             }
+        }
 
-            if (this.props.once) {
-                CoverageInstrumenter.saveCoverageToFile();
-                return app_process.process.exit(code);
+        if (this.props.once) {
+            CoverageInstrumenter.saveCoverageToFile();
+            return app_process.process.exit(code);
+        }
+
+        this.setState({
+            status: 'finished',
+            coverage: CoverageInstrumenter.getCoverage()
+        }, () => {
+            if (this.pendingRunTest) {
+                this.pendingRunTest = false;
+                this.onRunTests();
             }
-
-            this.setState({
-                status: 'finished',
-                coverage: CoverageInstrumenter.getCoverage()
-            });
         });
     }
 

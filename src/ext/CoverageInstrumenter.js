@@ -60,7 +60,7 @@ export default class CoverageInstrumenter {
             for (let file in cov) {
                 ['b', 'f', 's'].forEach(type => {
                     for (let line in cov[file][type]) {
-                        if (cov[file][type][line] instanceof Array) {
+                        if (Array.isArray(cov[file][type][line])) {
                             cov[file][type][line] = cov[file][type][line].map(val => 0);
                         } else {
                             cov[file][type][line] = 0;

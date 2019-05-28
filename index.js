@@ -1,35 +1,41 @@
 const electron = require('electron');
 const {app, BrowserWindow} = electron;
 const console = require('console');
+const commander = require('commander');
 
 require('electron-context-menu')();
 
+commander
+    .usage('[file-pattern] [flags]')
+    .option('--console', 'Output test results to console.')
+    .option('--once', 'Run test cases once and exit.')
+    .option('--instrument', 'Instrument the code for coverage.')
+    .option('--watch', 'Watch for file changes and re-run tests.')
+    .option('--manual', 'Manual test execution through API.')
+    .option('--bootstrap <file>', 'File to run before tests')
+    .parse(process.argv);
+
 let mainWindow;
-let args = process.argv.slice(2);
-let flags = args.filter(val => val.startsWith('--'));
-let files = args.filter(val => !val.startsWith('--'));
 
-if (flags.includes('--help')) {
-    console.log(`Mocha Istanbul UI
+let files = commander.args[0];
+let flags = commander.options.map(opt => {
+    let name = opt.long.replace('--', '');
+    let value = commander[name];
 
-    Usage: mocha-istanbul-ui <setup-file> <test-files> <flags>
+    // Workaround for EventEmitter conflict bug.
+    // Commander extends EventEmitter, and puts flags onto the same namespace. 🙄
+    if (name === 'once') {
+        value = undefined;
+    }
 
-    Options:
+    if (name === 'once' && process.argv.indexOf(opt.long) > -1) {
+        value = true;
+    }
 
-        --once        Run test cases once and exit. 
-                      Exit code 1 if a test fails.
-
-        --console     Output test results to console.
-
-        --instrument  Instrument the code. 
-
-        --watch       Watch for file changes.
-                      Resets tests when file changes.
-    `);
-
-    return app.quit();
-}
-
+    return { name, value };
+}).filter(opt => {
+    return opt.value !== undefined;
+});
 
 app.console = new console.Console(process.stdout, process.stderr);
 app.process = process;
@@ -64,7 +70,7 @@ app.on('ready', function() {
  
     url += '?files=' + files;
     flags.forEach(flag => {
-        url += `&${flag.replace('--', '')}=true`;
+        url += `&${flag.name}=${flag.value}`;
     });
 
     mainWindow.loadURL(url);
