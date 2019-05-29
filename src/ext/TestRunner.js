@@ -50,7 +50,7 @@ function setup (opts, callback) {
     window.__miui_iframe.contentDocument.write(`
         <script>
         (function () {
-            global.require(window.top.require.resolve('mocha/mocha.js'));
+            global.require('mocha/mocha.js');
             let app_process = global.require('electron').remote.app;
 
             function Reporter (runner) {

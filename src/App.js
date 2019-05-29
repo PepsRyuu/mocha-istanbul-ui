@@ -8,9 +8,28 @@ import { getTestFiles, startWatcher } from './ext/utils';
 import './App.scss';
 
 let app_process = global.require('electron').remote.app;
+
+// All of the tests run in blank iframe.
+// The reason for this is so that if any tests want to create any DOM elements
+// or add some styles, they won't conflict with the styles and DOM for the test reporter.
 window.__miui_iframe = document.createElement('iframe');
 document.body.appendChild(window.__miui_iframe);
 window.__miui_iframe.contentDocument.write('<html><head><title>Test Frame</title></head><body></body></html>');
+
+// Need to modify require in the iframe
+// so that they resolve relatively to node_modules for the project
+// and not to the embedded iframe.
+window.__miui_iframe.contentDocument.write(`
+    <script>
+    (function () {
+        let parent_require = window.top.require;
+        let global_require = global.require;
+        global.require = function (mod) {
+            return global_require(parent_require.resolve(mod));
+        };
+    })();
+    </script>
+`);
 
 let subscribers = [];
 window.__miui__ = {
