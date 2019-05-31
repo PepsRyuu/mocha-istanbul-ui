@@ -114,6 +114,7 @@ function setup (opts, callback) {
 
             window.__miui_testrunner = {
                 grep: function(pattern) {
+                    this.reset();
                     mocha.grep(pattern);
                 },
 
@@ -176,6 +177,7 @@ export default class TestRunner {
     }
 
     static grep (pattern) {
+        statsReset();
         window.__miui_iframe.contentWindow.__miui_testrunner.grep(pattern);
     }
 

@@ -27,6 +27,14 @@ window.__miui_iframe.contentDocument.write(`
         global.require = function (mod) {
             return global_require(parent_require.resolve(mod));
         };
+
+        ['cache' , 'extensions', 'resolve'].forEach(prop => {
+            Object.defineProperty(global.require, prop, {
+                get() {
+                    return global_require[prop];
+                }
+            })
+        });
     })();
     </script>
 `);
