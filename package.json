@@ -1,6 +1,6 @@
 {
   "name": "mocha-istanbul-ui",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Run Mocha with Istanbul coverage visually.",
   "scripts": {
     "clean": "rm -rf dist",
