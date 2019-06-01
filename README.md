@@ -49,6 +49,8 @@ eg. ```mocha-istanbul-ui setup.js "src/*.spec.js" --instrument```
 
 **--bootstrap [file]** File to run before executing tests. Useful for setting up test environment.
 
+**--require [files]** List of files to require before executing tests.
+
 ## Manual Test Execution (Experimental 🧪)
 
 Most UI projects use a bundler which imports various type of assets. By default, ```require``` and ESM imports will not understand these custom assets, and won't understand any special syntax that's used (such as JSX). Some projects get around this by stubbing out the non-JS files using ```require.extensions```. This works for the most part, but has its drawbacks, such as being unable to test anything that relies on styles. Even if you implement support for the extensions in the test environment, it's duplicating the work that's already been done by loaders in your bundler setup.
@@ -88,3 +90,31 @@ if (module && module.hot) {
 
 In the main file, import all of your test case files. In this example, a glob plugin is being used, so it will import all files in the ```cases``` folder. This main file optionally has support for HMR (with Nollup). When a module has been updated, it will use ```miui.reset()``` to reset the test runner. It will then require itself to reload all of the test cases. Once reloaded, it will restart the tests with ```miui.run()```.
 
+## Jest Compatibility Layer (Experimental 🧪)
+
+Jest has been growing in popularity, but it's still unfortunately a CLI tool. While Mocha and Jest are directly incompatible with each other, it's not impossible to enable Mocha to run Jest test cases. Mocha Istabul UI provides an optional compatibility layer that aims to enable the majority of functionality that Jest offers, but with the Mocha Istabul UI app instead of the CLI, allowing the same user experience. 
+
+To run the compatibility layer, use the following in your ```package.json``` scripts:
+
+```
+"test:ui": "cross-env NODE_ENV=test mocha-istanbul-ui --require mocha-istanbul-ui/jest-compat \"src/**/*.spec.js\""
+```
+
+If using a transpiler such as Babel, you can also combine the above with the transpiler:
+
+```
+"test:ui": "cross-env NODE_ENV=test BABEL_ENV=test mocha-istanbul-ui --require @babel/register,mocha-istanbul-ui/jest-compat \"src/**/*.spec.js\""
+```
+
+Don't forget to create a ```.babelrc``` file that includes ```babel-plugin-istanbul```:
+
+```
+{
+    "presets": ['babel-preset-react-app'],
+    "env": {
+        "test": {
+            "plugins": ['istanbul']
+        }
+    }
+}
+```

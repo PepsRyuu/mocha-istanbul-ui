@@ -90,8 +90,16 @@ export default class App extends Component {
             onTestReset: this.onTestReset,
             onTestDone: this.onTestDone
         }, () => {
+            let path = global.require('path');
+
+            if (this.props.require) {
+                let parts = this.props.require.split(',');
+                parts.forEach(p => {
+                    window.__miui_iframe.contentDocument.write(`<script>global.require('${p}');</script>`);
+                });
+            }
+
             if (this.props.bootstrap) {
-                let path = global.require('path');
                 let bootstrap = path.normalize(path.resolve(process.cwd(), this.props.bootstrap)).replace(/\\/g, '\\\\');
                 window.__miui_iframe.contentDocument.write(`<script>global.require('${bootstrap}');</script>`);
             }

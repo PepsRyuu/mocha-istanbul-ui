@@ -13,6 +13,7 @@ commander
     .option('--watch', 'Watch for file changes and re-run tests.')
     .option('--manual', 'Manual test execution through API.')
     .option('--bootstrap <file>', 'File to run before tests')
+    .option('--require <files>', 'Files to require before tests.')
     .parse(process.argv);
 
 let mainWindow;

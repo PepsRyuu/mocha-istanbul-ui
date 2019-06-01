@@ -50,7 +50,7 @@ function setup (opts, callback) {
     window.__miui_iframe.contentDocument.write(`
         <script>
         (function () {
-            global.require('mocha/mocha.js');
+
             let app_process = global.require('electron').remote.app;
 
             function Reporter (runner) {
@@ -110,7 +110,16 @@ function setup (opts, callback) {
                 });
             }
 
-            mocha.setup({ ui: 'bdd', reporter: Reporter });
+            let mocha = new (global.require('mocha'))({
+                ui: 'bdd', 
+                reporter: Reporter
+            });
+
+            window.mocha = mocha;
+            mocha.suite.emit('pre-require', window, '', mocha); // ensures that beforeEach exists in require
+
+            let __beforeEachCbs = [];
+            let __afterEachCbs = [];
 
             window.__miui_testrunner = {
                 grep: function(pattern) {
@@ -120,6 +129,8 @@ function setup (opts, callback) {
 
                 reset: function () {
                     mocha.suite.suites = [];
+                    mocha.suite._beforeEach = [];
+                    mocha.suite._afterEach = [];
 
                     for (let file in global.require.cache) {
                         if (!file.indexOf('node_modules') > -1) {
@@ -129,8 +140,16 @@ function setup (opts, callback) {
                 },
 
                 run: function(files) {
+                    __beforeEachCbs.forEach(cb => {
+                        beforeEach(cb);
+                    });
+
+                    __afterEachCbs.forEach(cb => {
+                        afterEach(cb);
+                    })
+
                     try {
-                        files.forEach(global.require);
+                        mocha.files = files;
                         mocha.run(() => {
                             window.parent.__miui__.publish('done');
                         });
@@ -138,6 +157,14 @@ function setup (opts, callback) {
                         console.error(e);
                         window.parent.__miui__.publish('crash');
                     }
+                },
+
+                __beforeEach: function (cb) {
+                    __beforeEachCbs.push(cb);
+                },
+
+                __afterEach: function (cb) {
+                    __afterEachCbs.push(cb);
                 }
             }
 
