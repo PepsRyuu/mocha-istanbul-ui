@@ -45,50 +45,29 @@ eg. ```mocha-istanbul-ui setup.js "src/*.spec.js" --instrument```
 
 **--watch** Watch for file changes. Resets tests when file changes.
 
-**--manual** Don't start tests automatically. Use API to run tests instead. Useful when using bundlers.
-
 **--bootstrap [file]** File to run before executing tests. Useful for setting up test environment.
 
 **--require [files]** List of files to require before executing tests.
 
-## Manual Test Execution (Experimental 🧪)
+## Bundler Test Execution (Experimental 🧪)
 
 Most UI projects use a bundler which imports various type of assets. By default, ```require``` and ESM imports will not understand these custom assets, and won't understand any special syntax that's used (such as JSX). Some projects get around this by stubbing out the non-JS files using ```require.extensions```. This works for the most part, but has its drawbacks, such as being unable to test anything that relies on styles. Even if you implement support for the extensions in the test environment, it's duplicating the work that's already been done by loaders in your bundler setup.
 
 Instead of doing all of that, what I suggest is to use your bundler, and to manually handle test execution using APIs provided by MIUI. Here's an example of how to implement this:
 
 ```
-concurrently "cross-env NODE_ENV=test MAIN=test/main.js nollup -c" "wait-on http://localhost:9001/main.[hash].js && mocha-istanbul-ui --manual --bootstrap test/bootstrap.js"
+concurrently "cross-env NODE_ENV=test MAIN=test/main.js nollup -c" "wait-on http://localhost:8080 && mocha-istanbul-ui http://localhost:9001/main.[hash].js"
 ```
 
-In the above NPM script, we use ```concurrently``` which allows for multiple NPM scripts to be used at the same time. In the first part, we start building of the code, using the ```test/main.js``` file as an entry point. The config file uses ```process.env.MAIN``` as input. In the second part, we are waiting for the server to start and for the bundle to be compiled, and once it is, we start MIUI specifying ```--manual``` to let the tool know that we don't want tests to run automatically. Notice we do not specify any file pattern as we don't want MIUI to load any test files. The bootstrap will then be loaded which will setup our test environment.
+In the above NPM script, we use ```concurrently``` which allows for multiple NPM scripts to be used at the same time. In the first part, we start building of the code, using the ```test/main.js``` file as an entry point. The config file uses ```process.env.MAIN``` as input. In the second part, we're specifying the bundle file instead of a glob pattern. MIUI will detect that this is a http resource, and will load it using a script tag instead.
 
-```
-// test/bootstrap.js
-
-document.write(`
-    <link rel="stylesheet" type="text/css" href="http://localhost:9001/styles.[hash].css">
-    <script src="http://localhost:9001/main.[hash].js" onload="miui.run()"></script>
-`);
-```
-
-When the bootstrap file runs, we append all of the build's outputs. The compiled main file should include all of our test cases. When the script is loaded, we use the ```miui.run()``` method to start test execution.
+The compiled main file should include all of our test cases. The below example uses ```rollup-plugin-glob-import``` to include all test files.
 
 ```
 // test/main.js
 
 import './cases/*';
-
-if (module && module.hot) {
-    module.hot.accept(() => {
-        miui.reset();
-        require(module.id);
-        miui.run();
-    });
-}
 ```
-
-In the main file, import all of your test case files. In this example, a glob plugin is being used, so it will import all files in the ```cases``` folder. This main file optionally has support for HMR (with Nollup). When a module has been updated, it will use ```miui.reset()``` to reset the test runner. It will then require itself to reload all of the test cases. Once reloaded, it will restart the tests with ```miui.run()```.
 
 ## Jest Compatibility Layer (Experimental 🧪)
 

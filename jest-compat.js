@@ -1,10 +1,27 @@
+let Module = require('module');
+
+function resolveModule (mod) {
+    return Module._resolveFilename(mod, {
+        id: __dirname,
+        filename: __dirname,
+        paths: Module._nodeModulePaths(process.cwd())
+    });
+}
+
+function localRequire (mod) {
+    // Ensures we require relative to the actual project, and not
+    // to where mocha istanbul is located.
+    return global.require(resolveModule(mod));
+};
+
+
 window.jasmine = {
     Spec: class Spec {}
 };
 
-require('jest-jasmine2/build/jestExpect').default({});
+localRequire('jest-jasmine2/build/jestExpect').default({});
 
-let moduleMocker = require('jest-mock');
+let moduleMocker = localRequire('jest-mock');
 
 let timerConfig = {
     idToRef: id => ({ 
@@ -19,7 +36,7 @@ let timerConfig = {
     refToId: timer => (timer && timer.id) || undefined
 };
 
-let timers = new (require('@jest/fake-timers')).JestFakeTimers({
+let timers = new (localRequire('@jest/fake-timers')).JestFakeTimers({
     global,
     moduleMocker, 
     timerConfig, 
@@ -27,16 +44,16 @@ let timers = new (require('@jest/fake-timers')).JestFakeTimers({
     maxLoops: 5
 });
 
-let jss = require('jest-snapshot');
+let jss = localRequire('jest-snapshot');
 let snapshotState;
 
 window.__miui_testrunner.__beforeEach(function () {
-    let { setState } = require('expect');
+    let { setState } = localRequire('expect');
     let snapshotResolver = jss.buildSnapshotResolver({});
     let snapshotPath = snapshotResolver.resolveSnapshotPath(this.currentTest.file);
     snapshotState = new jss.SnapshotState(snapshotPath, {
         expand: true,
-        getBabelTraverse: () => require('@babel/traverse').default,
+        getBabelTraverse: () => localRequire('@babel/traverse').default,
         getPrettier: null,
         updateSnapshot: 'new'
     });
