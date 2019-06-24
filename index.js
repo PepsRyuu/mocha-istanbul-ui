@@ -46,6 +46,8 @@ app.on('window-all-closed', function() {
     }
 });
 
+app.commandLine.appendSwitch('disable-site-isolation-trials');
+
 app.on('ready', function() {
     let {width, height} = electron.screen.getPrimaryDisplay().workAreaSize
 
@@ -54,6 +56,8 @@ app.on('ready', function() {
         height: Math.min(768, height),
         title: 'Mocha Istanbul UI',
         webPreferences: {
+            webSecurity: false,
+            allowRunningInsecureContent: true,
             nodeIntegration: true,
             nodeIntegrationInSubFrames: true
         }
