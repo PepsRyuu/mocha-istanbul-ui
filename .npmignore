@@ -63,3 +63,5 @@ target/
 rollup.config.js
 README.md
 /index.html
+examples/
+docs/
