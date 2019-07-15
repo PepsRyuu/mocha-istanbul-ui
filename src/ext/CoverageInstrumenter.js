@@ -20,7 +20,8 @@ export default class CoverageInstrumenter {
                         '**/test{,-*}.js', 
                         '**/*.test.js', 
                         '**/__tests__/**', 
-                        '**/node_modules/**'
+                        '**/node_modules/**',
+                        '**/*.spec.js'
                     ];
 
                     let instrumenter = istanbul.createInstrumenter({
@@ -106,15 +107,19 @@ export default class CoverageInstrumenter {
                 fs.mkdirSync(coverage_folder);
             }
 
+            let coverage_obj = window.__miui_iframe.contentWindow.__coverage__;
             let coverage_file = path.resolve(coverage_folder, 'coverage.json');
-            let istanbul = path.resolve(process.cwd(), 'node_modules/.bin/istanbul');
+            fs.writeFileSync(coverage_file, JSON.stringify(coverage_obj));
 
-            fs.writeFileSync(coverage_file, JSON.stringify(window.__miui_iframe.contentWindow.__coverage__));
-            execSync(`${istanbul} report --include ${coverage_file} lcovonly cobertura html --dir ${coverage_folder}`);
+            let { Report, Collector } = require('istanbul');
+            ['lcovonly', 'cobertura', 'html'].forEach(report_type => {
+                let report = Report.create(report_type, { 
+                    dir: coverage_folder
+                });
+                let collector = new Collector();
+                collector.add(coverage_obj);
+                report.writeReport(collector, true);
+            });
         }
     }
 }
-
-
-
-
