@@ -4,7 +4,7 @@ import TestSummary from './components/test-summary/TestSummary';
 import CoverageInstrumenter from './ext/CoverageInstrumenter';
 import CoverageViewer from './components/coverage-viewer/CoverageViewer';
 import TestRunner from './ext/TestRunner';
-import { getTestFiles, startWatcher } from './ext/utils';
+import { startWatcher } from './ext/utils';
 import './App.scss';
 
 let app_process = global.require('electron').remote.app;
@@ -22,10 +22,19 @@ window.__miui_iframe.contentDocument.write('<html><head><title>Test Frame</title
 window.__miui_iframe.contentDocument.write(`
     <script>
     (function () {
-        let parent_require = window.top.require;
         let global_require = global.require;
+        let Module = require('module');
+
+        function resolveModule (mod) {
+            return Module._resolveFilename(mod, {
+                id: __dirname,
+                filename: __dirname,
+                paths: Module._nodeModulePaths(process.cwd())
+            });
+        }
+
         global.require = function (mod) {
-            return global_require(parent_require.resolve(mod));
+            return global_require(resolveModule(mod));
         };
 
         ['cache' , 'extensions', 'resolve'].forEach(prop => {
@@ -81,17 +90,29 @@ export default class App extends Component {
         } 
 
         if (this.props.watch) {
-            startWatcher(this.onRunTests);
+            startWatcher(() => {
+                this.onClearTests();
+                this.onRunTests()
+            });
         }
 
         TestRunner.setup({ 
+            files: this.props.files? this.props.files.split(',') : [],
             console: this.props.console,
             onTestProgress: this.onTestProgress,
             onTestReset: this.onTestReset,
             onTestDone: this.onTestDone
         }, () => {
+            let path = global.require('path');
+
+            if (this.props.require) {
+                let parts = this.props.require.split(',');
+                parts.forEach(p => {
+                    window.__miui_iframe.contentDocument.write(`<script>global.require('${p}');</script>`);
+                });
+            }
+
             if (this.props.bootstrap) {
-                let path = global.require('path');
                 let bootstrap = path.normalize(path.resolve(process.cwd(), this.props.bootstrap)).replace(/\\/g, '\\\\');
                 window.__miui_iframe.contentDocument.write(`<script>global.require('${bootstrap}');</script>`);
             }
@@ -106,14 +127,24 @@ export default class App extends Component {
         window.location.reload();
     }
 
+    onClearTests () {
+        if (this.state.status === 'running') {
+            this.pendingRunTest = true;
+            return;
+        }
+
+        TestRunner.clear();
+    }
+
     onRunTests () {
         if (this.state.status === 'running') {
             this.pendingRunTest = true;
             return;
         }
 
-        let files = getTestFiles(this.props.files);
-        TestRunner.run(files);
+        TestRunner.clear();
+        this.onTestReset();
+        TestRunner.run();
     }
 
     onTestProgress (stats) {
