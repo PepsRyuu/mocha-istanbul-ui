@@ -1,3 +1,4 @@
+
 const electron = require('electron');
 const {app, BrowserWindow} = electron;
 const console = require('console');
@@ -25,11 +26,11 @@ let flags = commander.options.map(opt => {
 
     // Workaround for EventEmitter conflict bug.
     // Commander extends EventEmitter, and puts flags onto the same namespace. 🙄
-    if (name === 'once') {
+    if (name === 'once' || name === 'console') {
         value = undefined;
     }
 
-    if (name === 'once' && process.argv.indexOf(opt.long) > -1) {
+    if ((name === 'once' || name === 'console') && process.argv.indexOf(opt.long) > -1) {
         value = true;
     }
 

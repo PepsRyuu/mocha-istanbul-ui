@@ -76,7 +76,7 @@ export default function (opts) {
                 state: test.state,
                 duration: test.duration
             });
-            stdout(indent() + '\\x1b[32m ✓ \\x1b[0m' + test.title);
+            stdout(indent() + '\x1b[32m ✓ \x1b[0m' + test.title);
         });
 
         runner.on('fail', (test, err) => {

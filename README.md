@@ -59,7 +59,7 @@ Instead of doing all of that, what I suggest is to use your bundler, and to manu
 concurrently "cross-env NODE_ENV=test MAIN=test/main.js nollup -c" "wait-on http://localhost:8080 && mocha-istanbul-ui http://localhost:9001/main.[hash].js"
 ```
 
-In the above NPM script, we use ```concurrently``` which allows for multiple NPM scripts to be used at the same time. In the first part, we start building of the code, using the ```test/main.js``` file as an entry point. The config file uses ```process.env.MAIN``` as input. In the second part, we're specifying the bundle file instead of a glob pattern. MIUI will detect that this is a http resource, and will load it using a script tag instead.
+In the above NPM script, we use ```concurrently``` (or ```npm-run-all```) which allows for multiple NPM scripts to be used at the same time. In the first part, we start building of the code, using the ```test/main.js``` file as an entry point. The config file uses ```process.env.MAIN``` as input. In the second part, we're specifying the bundle file instead of a glob pattern. MIUI will detect that this is a http resource, and will load it using a script tag instead.
 
 The compiled main file should include all of our test cases. The below example uses ```rollup-plugin-glob-import``` to include all test files.
 
