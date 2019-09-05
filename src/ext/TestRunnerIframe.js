@@ -1,7 +1,7 @@
 export default function (opts) {
     let glob = global.require('glob');
     let path = global.require('path');
-    let app_process = global.require('electron').remote.app;
+    let Mocha = global.require('mocha');
 
     function loadResource (url) {
         return new Promise(resolve => {
@@ -36,72 +36,48 @@ export default function (opts) {
     }
 
     function Reporter (runner) {
-        let indentation = 0;
-        let indent = () => Array(indentation).join(' ');
-        let stdout = (msg) => opts.console && app_process.console.log(msg);
-        let stderr = (msg) => stdout(`\x1b[31m${msg}\x1b[0m`);
-
-        runner.on('start', () => {
-            stdout(' ');
-        });
-
-        runner.on('suite', suite => {
-            indentation++;
-            stdout(indent() + suite.title);
-            window.parent.__miui__.publish('suite', {
+        runner.on('suite', (suite) => {
+            window.onMochaEvent('suite', {
                 title: suite.title
             });
         });
 
         runner.on('suite end', () => {
-            indentation--;
-            if (indentation === 1) {
-                stdout(' ');
-            }
-
-            window.parent.__miui__.publish('suite end');
+            window.onMochaEvent('suite end');
         });
 
         runner.on('pending', (test) => {
-            window.parent.__miui__.publish('pending', {
+            window.onMochaEvent('pending', {
                 title: test.title,
                 state: 'pending'
             });
-            stdout(indent() + ' - ' + test.title);
         });
 
         runner.on('pass', (test) => {
-            window.parent.__miui__.publish('pass', {
+            window.onMochaEvent('pass', {
                 title: test.title,
                 state: test.state,
                 duration: test.duration
             });
-            stdout(indent() + '\x1b[32m ✓ \x1b[0m' + test.title);
         });
 
         runner.on('fail', (test, err) => {
-            window.parent.__miui__.publish('fail', {
+            window.onMochaEvent('fail', {
                 title: test.title,
                 state: test.state,
                 duration: test.duration,
                 error: err.stack
             });
 
-            stderr(indent() + ' ✖ ' + test.title);
-            stderr(err.stack.split('\\n').map(s => indent() + '       ' + s).join('\\n'));
         });
     }
 
-    let mocha = new (global.require('mocha'))({
-        ui: 'bdd', 
-        reporter: Reporter
-    });
-
+    let mocha = new Mocha({ ui: 'bdd', reporter: Reporter });
     mocha.suite.emit('pre-require', global, '', mocha);
 
     let __beforeEachCbs = [];
     let __afterEachCbs = [];
-    let __files = [];
+    let __files = opts.files;
     let isRunning = false;
 
     window.__miui_testrunner = {
@@ -143,18 +119,17 @@ export default function (opts) {
                 }
 
                 mocha.files = req_files.reduce((acc, val) => {
-                    acc = acc.concat(getTestFiles(val));
-                    return acc;
+                    return acc.concat(getTestFiles(val));
                 }, []);
 
                 mocha.run(() => {
-                    window.parent.__miui__.publish('done');
                     isRunning = false;
+                    window.onMochaEvent('done');
                 });
             } catch (e) {
                 isRunning = false;
                 console.error(e);
-                window.parent.__miui__.publish('crash');
+                window.onMochaEvent('crash');
             }
         },
 
@@ -167,30 +142,5 @@ export default function (opts) {
         }
     }
 
-    window.miui = {
-        clear: function () {
-            if (isRunning) {
-                return;
-            }
-
-            window.parent.__miui__.publish('reset');
-            window.__miui_testrunner.clear();
-        },
-
-        run: function () {
-            if (isRunning) {
-                return;
-            }
-
-            window.parent.__miui__.publish('reset'); // for statsReset
-            window.__miui_testrunner.run();
-        },
-
-        files: function (files) {
-            __files = files;
-        }
-    }
-
-    window.miui.files(opts.files);
-    window.parent.__miui__.publish('init');
+    window.onMochaEvent('init');
 }

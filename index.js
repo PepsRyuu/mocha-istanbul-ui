@@ -12,7 +12,6 @@ commander
     .option('--once', 'Run test cases once and exit.')
     .option('--instrument', 'Instrument the code for coverage.')
     .option('--watch', 'Watch for file changes and re-run tests.')
-    // .option('--manual', 'Manual test execution through API.')
     .option('--bootstrap <file>', 'File to run before tests')
     .option('--require <files>', 'Files to require before tests.')
     .parse(process.argv);

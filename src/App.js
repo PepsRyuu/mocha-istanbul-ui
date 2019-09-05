@@ -5,59 +5,12 @@ import CoverageInstrumenter from './ext/CoverageInstrumenter';
 import CoverageViewer from './components/coverage-viewer/CoverageViewer';
 import TestRunner from './ext/TestRunner';
 import { startWatcher } from './ext/utils';
+import Iframe from './Iframe';
 import './App.scss';
 
+let path = global.require('path');
 let app_process = global.require('electron').remote.app;
-
-// All of the tests run in blank iframe.
-// The reason for this is so that if any tests want to create any DOM elements
-// or add some styles, they won't conflict with the styles and DOM for the test reporter.
-window.__miui_iframe = document.createElement('iframe');
-document.body.appendChild(window.__miui_iframe);
-window.__miui_iframe.contentDocument.write('<html><head><title>Test Frame</title></head><body></body></html>');
-
-// Need to modify require in the iframe
-// so that they resolve relatively to node_modules for the project
-// and not to the embedded iframe.
-window.__miui_iframe.contentDocument.write(`
-    <script>
-    (function () {
-        let global_require = global.require;
-        let Module = require('module');
-
-        function resolveModule (mod) {
-            return Module._resolveFilename(mod, {
-                id: __dirname,
-                filename: __dirname,
-                paths: Module._nodeModulePaths(process.cwd())
-            });
-        }
-
-        global.require = function (mod) {
-            return global_require(resolveModule(mod));
-        };
-
-        ['cache' , 'extensions', 'resolve'].forEach(prop => {
-            Object.defineProperty(global.require, prop, {
-                get() {
-                    return global_require[prop];
-                }
-            })
-        });
-    })();
-    </script>
-`);
-
-let subscribers = [];
-window.__miui__ = {
-    publish: function (type, data) {
-        subscribers.forEach(fn => fn(type, data));
-    },
-
-    subscribe: function (fn) {
-        subscribers.push(fn);
-    }
-}
+Iframe.init();
 
 export default class App extends Component {
     constructor (props) {
@@ -77,10 +30,8 @@ export default class App extends Component {
         this.onRunTests = this.onRunTests.bind(this);
         this.onToggleCoverage = this.onToggleCoverage.bind(this);
         this.onGrep = this.onGrep.bind(this);
-        this.onStopGrep = this.onStopGrep.bind(this);
-
+        this.onStopGrep = this.onGrep.bind(this, '');
         this.onTestProgress = this.onTestProgress.bind(this);
-        this.onTestReset = this.onTestReset.bind(this);
         this.onTestDone = this.onTestDone.bind(this);
     }
 
@@ -90,50 +41,33 @@ export default class App extends Component {
         } 
 
         if (this.props.watch) {
-            startWatcher(() => {
-                this.onClearTests();
-                this.onRunTests()
-            });
+            startWatcher(this.onRunTests);
         }
 
         TestRunner.setup({ 
             files: this.props.files? this.props.files.split(',') : [],
             console: this.props.console,
             onTestProgress: this.onTestProgress,
-            onTestReset: this.onTestReset,
             onTestDone: this.onTestDone
         }, () => {
-            let path = global.require('path');
-
             if (this.props.require) {
                 let parts = this.props.require.split(',');
                 parts.forEach(p => {
-                    window.__miui_iframe.contentDocument.write(`<script>global.require('${p}');</script>`);
+                    Iframe.evaluate(p => global.require(p), p);
                 });
             }
 
             if (this.props.bootstrap) {
                 let bootstrap = path.normalize(path.resolve(process.cwd(), this.props.bootstrap)).replace(/\\/g, '\\\\');
-                window.__miui_iframe.contentDocument.write(`<script>global.require('${bootstrap}');</script>`);
+                Iframe.evaluate(b => global.require(b), bootstrap);
             }
 
-            if (!this.props.manual) {
-                this.onRunTests();
-            }
+            this.onRunTests();
         });
     }
 
     onRefresh () {
         window.location.reload();
-    }
-
-    onClearTests () {
-        if (this.state.status === 'running') {
-            this.pendingRunTest = true;
-            return;
-        }
-
-        TestRunner.clear();
     }
 
     onRunTests () {
@@ -142,20 +76,19 @@ export default class App extends Component {
             return;
         }
 
-        TestRunner.clear();
-        this.onTestReset();
-        TestRunner.run();
+        this.setState({
+            status: 'running'
+        }, () => {
+            TestRunner.clear();
+            CoverageInstrumenter.reset();
+            TestRunner.run();
+        });
     }
 
     onTestProgress (stats) {
         this.setState({ 
-            stats,
-            status: 'running'
+            stats
         });
-    }
-
-    onTestReset () {
-        CoverageInstrumenter.reset();
     }
 
     onTestDone (code, stats) {
@@ -192,20 +125,8 @@ export default class App extends Component {
     }
 
     onGrep (value) {
-        this.setState({
-            grepping: value
-        });
-
+        this.setState({ grepping: value });
         TestRunner.grep(value);
-        this.onRunTests();
-    }
-
-    onStopGrep () {
-        this.setState({
-            grepping: ''
-        });
-
-        TestRunner.grep('');
         this.onRunTests();
     }
 

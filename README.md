@@ -56,7 +56,7 @@ Most UI projects use a bundler which imports various type of assets. By default,
 Instead of doing all of that, what I suggest is to use your bundler, and to manually handle test execution using APIs provided by MIUI. Here's an example of how to implement this:
 
 ```
-concurrently "cross-env NODE_ENV=test MAIN=test/main.js nollup -c" "wait-on http://localhost:8080 && mocha-istanbul-ui http://localhost:9001/main.[hash].js"
+concurrently "cross-env NODE_ENV=test MAIN=test/main.js nollup -c" "wait-on http://localhost:8080 && mocha-istanbul-ui http://localhost:8080/main.[hash].js"
 ```
 
 In the above NPM script, we use ```concurrently``` (or ```npm-run-all```) which allows for multiple NPM scripts to be used at the same time. In the first part, we start building of the code, using the ```test/main.js``` file as an entry point. The config file uses ```process.env.MAIN``` as input. In the second part, we're specifying the bundle file instead of a glob pattern. MIUI will detect that this is a http resource, and will load it using a script tag instead.
