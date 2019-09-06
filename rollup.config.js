@@ -12,7 +12,7 @@ let scss = (code, id) => {
 };
 
 let config = {
-    input: './src/main.js',
+    input: process.env.MAIN || './src/main.js',
     output: {
         dir: './dist',
         format: 'umd',

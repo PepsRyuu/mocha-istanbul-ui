@@ -1,4 +1,5 @@
 let chokidar = global.require('chokidar');
+let app_process = global.require('electron').remote.app;
 
 export function getQuery () {
     let query = {};
@@ -29,4 +30,16 @@ export function startWatcher (callback) {
     });
 
     watcher.on('change', callback);
+}
+
+export function stdout (msg) {
+    app_process.console.log(msg)
+}
+
+export function stderr (msg) {
+    stdout(`\x1b[31m${msg}\x1b[0m`)
+}
+
+export function quit (code) {
+    app_process.process.exit(code);
 }

@@ -1,7 +1,7 @@
 import TestRunnerIframe from './TestRunnerIframe';
 import Iframe from '../Iframe';
+import { stdout, stderr } from './utils';
 
-let app_process = global.require('electron').remote.app;
 let test_stats, parent_suites, active_suite, options;
 
 function setup (opts, callback) {
@@ -9,8 +9,6 @@ function setup (opts, callback) {
 
     let indentation = 0;
     let indent = () => Array(indentation).join(' ');
-    let stdout = (msg) => opts.console && app_process.console.log(msg);
-    let stderr = (msg) => stdout(`\x1b[31m${msg}\x1b[0m`);
 
     Iframe.getWindow().onMochaEvent = (type, data) => {
         if (type === 'init') {
@@ -25,7 +23,7 @@ function setup (opts, callback) {
             };
 
             indentation++;
-            stdout(indent() + data.title);
+            opts.console && stdout(indent() + data.title);
 
             active_suite.suites.push(obj);
             parent_suites.push(active_suite);
@@ -34,16 +32,16 @@ function setup (opts, callback) {
         }
 
         if (type === 'pending') {
-            stdout(indent() + ' - ' + data.title);
+            opts.console && stdout(indent() + ' - ' + data.title);
         }
 
         if (type === 'pass') {
-            stdout(indent() + '\x1b[32m ✓ \x1b[0m' + data.title);
+            opts.console && stdout(indent() + '\x1b[32m ✓ \x1b[0m' + data.title);
         }
 
         if (type === 'fail') {
-            stderr(indent() + ' ✖ ' + data.title);
-            stderr(data.error.split('\\n').map(s => indent() + '       ' + s).join('\\n'));
+            opts.console && stderr(indent() + ' ✖ ' + data.title);
+            opts.console && stderr(data.error.split('\\n').map(s => indent() + '       ' + s).join('\\n'));
         }
 
         if (type === 'pass' || type === 'fail' || type === 'pending') {
@@ -55,7 +53,7 @@ function setup (opts, callback) {
         if (type === 'suite end') {
             indentation--;
             if (indentation === 1) {
-                stdout(' ');
+                opts.console && stdout(' ');
             }
             active_suite = parent_suites.pop();
         }

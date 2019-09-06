@@ -1,6 +1,6 @@
 {
   "name": "mocha-istanbul-ui",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Run Mocha with Istanbul coverage visually.",
   "scripts": {
     "clean": "rm -rf dist",
@@ -9,7 +9,7 @@
     "start": "cross-env NODE_ENV=production npm run build && electron . files --console",
     "build": "npm run clean && cross-env NODE_ENV=production rollup -c && cp index.html dist/",
     "prepack": "npm run build",
-    "test:ui": "concurrently \"npm run build:dev\" \"wait-on http://localhost:8080 && electron . \"test/**/*.js\"\""
+    "test:ui": "concurrently \"cross-env NODE_ENV=test MAIN=test/main.js nollup -c\" \"wait-on http://localhost:8080/main.js && electron . http://localhost:8080/main.js\""
   },
   "bin": {
     "mocha-istanbul-ui": "./cli.js"
@@ -36,12 +36,12 @@
     "concurrently": "4.1.0",
     "cross-env": "5.2.0",
     "node-sass": "4.12.0",
-    "nollup": "0.5.1",
+    "nollup": "^0.7.1",
     "preact": "8.2.5",
     "rollup": "1.2.3",
     "rollup-plugin-babel": "^4.3.3",
     "rollup-plugin-glob-import": "0.3.1",
-    "rollup-plugin-hot-css": "0.0.4",
+    "rollup-plugin-hot-css": "0.0.6",
     "rollup-plugin-node-resolve": "4.0.1",
     "wait-on": "3.2.0"
   }

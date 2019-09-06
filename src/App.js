@@ -4,12 +4,11 @@ import TestSummary from './components/test-summary/TestSummary';
 import CoverageInstrumenter from './ext/CoverageInstrumenter';
 import CoverageViewer from './components/coverage-viewer/CoverageViewer';
 import TestRunner from './ext/TestRunner';
-import { startWatcher } from './ext/utils';
+import { startWatcher, stdout, quit } from './ext/utils';
 import Iframe from './Iframe';
 import './App.scss';
 
 let path = global.require('path');
-let app_process = global.require('electron').remote.app;
 Iframe.init();
 
 export default class App extends Component {
@@ -93,18 +92,18 @@ export default class App extends Component {
 
     onTestDone (code, stats) {
         if (this.props.console) {
-            app_process.console.log('  Passed: ' + stats.passed);
-            app_process.console.log('  Failed: ' + stats.failed);
-            app_process.console.log('  Pending: ' + stats.pending);
+            stdout('  Passed: ' + stats.passed);
+            stdout('  Failed: ' + stats.failed);
+            stdout('  Pending: ' + stats.pending);
 
             if (CoverageInstrumenter.isCoverageAvailable()) {
-                app_process.console.log('  Coverage: ' + CoverageInstrumenter.getCoverage().percentage + '%');
+                stdout('  Coverage: ' + CoverageInstrumenter.getCoverage().percentage + '%');
             }
         }
 
         if (this.props.once) {
             CoverageInstrumenter.saveCoverageToFile();
-            return app_process.process.exit(code);
+            return quit(code);
         }
 
         this.setState({
