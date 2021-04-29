@@ -33,13 +33,18 @@ export default function () {
             }
         }
 
-        let instrumented = instrumenter.instrumentSync(code, filename);
-        let sourceMap = instrumenter.lastSourceMap();
-        sourceMap.sourceRoot = '';
-        sourceMap.sources = sourceMap.sources.map(file => {
-            return 'sources:///' + relativeFilename;
-        })
-        instrumented += '\n' + convertSourceMap.fromObject(sourceMap).toComment();
-        return instrumented;
+        try {
+			let instrumented = instrumenter.instrumentSync(code, filename);
+			let sourceMap = instrumenter.lastSourceMap();
+			sourceMap.sourceRoot = '';
+			sourceMap.sources = sourceMap.sources.map(file => {
+			return 'sources:///' + relativeFilename;
+			});
+			instrumented += '\n' + convertSourceMap.fromObject(sourceMap).toComment();
+			return instrumented;
+		} catch (e) {
+			e.message = 'InstrumentError @ ' + filename + '\n' + e.message;
+			throw e;
+		}
     }, { exts: ['.js', '.mjs'] });
 }

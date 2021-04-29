@@ -74,6 +74,7 @@ export default function (opts) {
 
     let mocha = new Mocha({ ui: 'bdd', reporter: Reporter });
     mocha.suite.emit('pre-require', global, '', mocha);
+    mocha.cleanReferencesAfterRun(false);
 
     let __beforeEachCbs = [];
     let __afterEachCbs = [];
@@ -82,7 +83,7 @@ export default function (opts) {
 
     window.__miui_testrunner = {
         grep: function(pattern) {
-            mocha.grep(pattern);
+            mocha.grep(pattern.replace(/(\(|\))/g, '\\$1'));
         },
 
         clear: function () {

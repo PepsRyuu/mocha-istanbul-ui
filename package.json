@@ -26,7 +26,7 @@
     "istanbul": "0.4.5",
     "istanbul-lib-instrument": "1.8.0",
     "minimatch": "3.0.4",
-    "mocha": "3.4.2",
+    "mocha": "^8.3.2",
     "pirates": "3.0.1"
   },
   "devDependencies": {
